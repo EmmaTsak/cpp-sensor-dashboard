@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Sensor Dashboard</title>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f4f6f8;
+                padding: 40px;
+            }
+
+            h1 {
+                color: #222;
+            }
+
+            .sensor-card {
+                background: white;
+                padding: 20px;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            .sensor-name {
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+            .sensor-value {
+                font-size: 28px;
+                margin-top: 10px;
+            }
+
+            .sensor-status {
+                margin-top: 10px;
+                font-weight: bold;
+            }
+
+            .status-ok {
+                color: green;
+            }
+
+            .status-warning {
+                color: darkred;
+            }
+
+            .sensor-card-warning {
+                border-left: 6px solid darkred;
+            }
+
+            .sensor-history {
+                margin-top: 12px;
+                font-size: 14px;
+                color: #555;
+            }
+
+            .sensor-stats {
+                margin-top: 12px;
+                font-size: 14px;
+                color: #333;
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .error {
+                color: darkred;
+                background: #ffe0e0;
+                padding: 15px;
+                border-radius: 8px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>Sensor Dashboard</h1>
+
+        <div id="sensor-container">
+            Loading sensors...
+        </div>
+
+        <script>
+            function formatNumber(value) {
+                return Number(value).toFixed(2);
+            }
+
+            async function loadSensors() {
+            try {
+            const response = await fetch("http://localhost:8080/sensors");
+
+            if (!response.ok) {
+            throw new Error("Backend returned an error");
+            }
+
+            const data = await response.json();
+
+            const container = document.getElementById("sensor-container");
+            container.innerHTML = "";
+
+            data.sensors.forEach(sensor => {
+            const card = document.createElement("div");
+            card.className = "sensor-card";
+
+            if (sensor.status !== "OK") {
+                card.classList.add("sensor-card-warning");
+            }
+
+            const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
+
+            const historyText = sensor.history.join(", ");
+
+            card.innerHTML = `
+                <div class="sensor-name">${sensor.name}</div>
+                <div class="sensor-value">${sensor.value} ${sensor.unit}</div>
+                <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
+
+                <div class="sensor-stats">
+                    <div>Min: ${sensor.min} ${sensor.unit}</div>
+                    <div>Max: ${sensor.max} ${sensor.unit}</div>
+                    <div>Avg: ${sensor.average} ${sensor.unit}</div>
+                </div>
+
+                <div class="sensor-history">
+                    <strong>Recent readings:</strong> ${historyText}
+                </div>
+            `;
+
+            container.appendChild(card);
+            });
+
+            } catch (error) {
+            const container = document.getElementById("sensor-container");
+
+            container.innerHTML = `
+            <div class="error">
+            Could not connect to the C++ backend.
+            Make sure the backend is running on port 8080.
+            </div>
+            `;
+            }
+            }
+
+            loadSensors();
+
+            setInterval(loadSensors, 2000);
+        </script>
+    </body>
+</html>
