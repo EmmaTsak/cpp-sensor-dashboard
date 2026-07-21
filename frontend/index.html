@@ -100,34 +100,36 @@
             container.innerHTML = "";
 
             data.sensors.forEach(sensor => {
-            const card = document.createElement("div");
-            card.className = "sensor-card";
+                const card = document.createElement("div");
+                card.className = "sensor-card";
 
-            if (sensor.status !== "OK") {
-                card.classList.add("sensor-card-warning");
-            }
+                if (sensor.status !== "OK") {
+                    card.classList.add("sensor-card-warning");
+                }
 
-            const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
+                const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
 
-            const historyText = sensor.history.join(", ");
+                const historyText = sensor.history
+                    .map(reading => formatNumber(reading))
+                    .join(", ");
 
-            card.innerHTML = `
-                <div class="sensor-name">${sensor.name}</div>
-                <div class="sensor-value">${sensor.value} ${sensor.unit}</div>
-                <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
+                card.innerHTML = `
+                    <div class="sensor-name">${sensor.name}</div>
+                    <div class="sensor-value">${formatNumber(sensor.value)} ${sensor.unit}</div>
+                    <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
 
-                <div class="sensor-stats">
-                    <div>Min: ${sensor.min} ${sensor.unit}</div>
-                    <div>Max: ${sensor.max} ${sensor.unit}</div>
-                    <div>Avg: ${sensor.average} ${sensor.unit}</div>
-                </div>
+                    <div class="sensor-stats">
+                        <div>Min: ${formatNumber(sensor.min)} ${sensor.unit}</div>
+                        <div>Max: ${formatNumber(sensor.max)} ${sensor.unit}</div>
+                        <div>Avg: ${formatNumber(sensor.average)} ${sensor.unit}</div>
+                    </div>
 
-                <div class="sensor-history">
-                    <strong>Recent readings:</strong> ${historyText}
-                </div>
-            `;
+                    <div class="sensor-history">
+                        <strong>Recent readings:</strong> ${historyText}
+                    </div>
+                `;
 
-            container.appendChild(card);
+                container.appendChild(card);
             });
 
             } catch (error) {

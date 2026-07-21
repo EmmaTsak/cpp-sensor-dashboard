@@ -8,6 +8,9 @@ The project includes a simple web frontend that displays live sensor values, war
 This project was built as a beginner-friendly modern C++ learning project.
 It combines embedded-style sensor simulation, backend API development, and a small frontend dashboard.
 
+## Screenshot
+
+![Sensor Dashboard](assets/dashboard-screenshot.png)
 The C++ backend generates simulated readings for sensors such as temperature, humidity, and voltage. These readings are updated in the background using a separate thread. The frontend fetches the data from the backend and displays it in a simple dashboard.
 
 ## Features
