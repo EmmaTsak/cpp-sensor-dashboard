@@ -3,6 +3,29 @@
 #include <utility>
 #include <algorithm>
 #include <numeric>
+#include <iomanip>
+#include <sstream>
+#include <ctime>
+#include <chrono>
+
+std::string getCurrentTimestamp() {
+    auto now = std::chrono::system_clock::now();
+
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+    std::tm localTime{};
+
+#ifdef _WIN32
+    localtime_s(&localTime, &currentTime);
+#else
+    localtime_r(&currentTime, &localTime);
+#endif
+
+    std::ostringstream timestamp;
+    timestamp << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
+
+    return timestamp.str();
+}
 
 Sensor::Sensor(
     std::string name,
@@ -35,8 +58,14 @@ void Sensor::updateReading() {
     std::uniform_real_distribution<double> distribution(minValue, maxValue);
 
     latestValue = distribution(generator);
+    latestTimestamp = getCurrentTimestamp();
 
-    history.push_back(latestValue);
+    SensorReading reading{
+        latestValue,
+        latestTimestamp
+    };
+
+    history.push_back(reading);
 
     if (history.size() > maxHistorySize) {
         history.pop_front();
@@ -45,6 +74,10 @@ void Sensor::updateReading() {
 
 double Sensor::getLatestValue() const {
     return latestValue;
+}
+
+std::string Sensor::getLatestTimestamp() const {
+    return latestTimestamp;
 }
 
 std::string Sensor::getStatus() const {
@@ -59,7 +92,7 @@ std::string Sensor::getStatus() const {
     return "OK";
 }
 
-const std::deque<double>& Sensor::getHistory() const {
+const std::deque<SensorReading>& Sensor::getHistory() const {
     return history;
 }
 
@@ -68,7 +101,15 @@ double Sensor::getMin() const {
         return 0.0;
     }
 
-    return *std::min_element(history.begin(), history.end());
+    auto minReading = std::min_element(
+        history.begin(),
+        history.end(),
+        [](const SensorReading& a, const SensorReading& b) {
+            return a.value < b.value;
+        }
+    );
+
+    return minReading->value;
 }
 
 double Sensor::getMax() const {
@@ -76,7 +117,15 @@ double Sensor::getMax() const {
         return 0.0;
     }
 
-    return *std::max_element(history.begin(), history.end());
+    auto maxReading = std::max_element(
+        history.begin(),
+        history.end(),
+        [](const SensorReading& a, const SensorReading& b) {
+            return a.value < b.value;
+        }
+    );
+
+    return maxReading->value;
 }
 
 double Sensor::getAverage() const {
@@ -84,7 +133,14 @@ double Sensor::getAverage() const {
         return 0.0;
     }
 
-    double sum = std::accumulate(history.begin(), history.end(), 0.0);
+    double sum = std::accumulate(
+        history.begin(),
+        history.end(),
+        0.0,
+        [](double total, const SensorReading& reading) {
+            return total + reading.value;
+        }
+    );
 
     return sum / history.size();
 }

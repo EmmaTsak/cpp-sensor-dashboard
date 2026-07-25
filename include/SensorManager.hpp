@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <memory>
 #include <mutex>
@@ -8,13 +9,17 @@
 
 class SensorManager {
 private:
-	std::vector<std::unique_ptr<Sensor>> sensors;
-	mutable std::mutex sensorMutex;
+    std::vector<std::unique_ptr<Sensor>> sensors;
+    mutable std::mutex sensorMutex;
 
 public:
-	void addSensor(std::unique_ptr<Sensor> sensor);
+    void addSensor(std::unique_ptr<Sensor> sensor);
 
-	void updateAllSensors();
+    void updateAllSensors();
 
-	std::string getSensorsJson() const;
+    std::string getSensorsJson() const;
+
+    std::string getSensorJsonByName(const std::string& sensorName) const;
+
+    std::string getSensorHistoryJsonByName(const std::string& sensorName) const;
 };

@@ -3,7 +3,11 @@
 #include <string>
 #include <random>
 #include <deque>
-#include <cstddef>
+
+struct SensorReading {
+    double value;
+    std::string timestamp;
+};
 
 class Sensor {
 private:
@@ -17,8 +21,9 @@ private:
     double warningHigh;
 
     double latestValue = 0.0;
+    std::string latestTimestamp;
 
-    std::deque<double> history;
+    std::deque<SensorReading> history;
     static constexpr std::size_t maxHistorySize = 10;
 
 public:
@@ -35,10 +40,13 @@ public:
     std::string getUnit() const;
 
     void updateReading();
+
     double getLatestValue() const;
+    std::string getLatestTimestamp() const;
+
     std::string getStatus() const;
 
-    const std::deque<double>& getHistory() const;
+    const std::deque<SensorReading>& getHistory() const;
 
     double getMin() const;
     double getMax() const;

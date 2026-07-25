@@ -1,0 +1,28 @@
+{
+  "sensors": [
+    {
+      "name": "Temperature",
+      "unit": "C",
+      "minValue": 10.0,
+      "maxValue": 40.0,
+      "warningLow": 20.0,
+      "warningHigh": 30.0
+    },
+    {
+      "name": "Humidity",
+      "unit": "%",
+      "minValue": 10.0,
+      "maxValue": 90.0,
+      "warningLow": 30.0,
+      "warningHigh": 65.0
+    },
+    {
+      "name": "Voltage",
+      "unit": "V",
+      "minValue": 2.5,
+      "maxValue": 3.8,
+      "warningLow": 3.1,
+      "warningHigh": 3.5
+    }
+  ]
+}

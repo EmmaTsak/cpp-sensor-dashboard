@@ -4,6 +4,8 @@
         <meta charset="UTF-8">
         <title>Sensor Dashboard</title>
 
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -20,7 +22,11 @@
                 padding: 20px;
                 margin-bottom: 15px;
                 border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .sensor-card-warning {
+                border-left: 6px solid darkred;
             }
 
             .sensor-name {
@@ -31,6 +37,12 @@
             .sensor-value {
                 font-size: 28px;
                 margin-top: 10px;
+            }
+
+            .sensor-time {
+                margin-top: 5px;
+                font-size: 13px;
+                color: #666;
             }
 
             .sensor-status {
@@ -46,16 +58,6 @@
                 color: darkred;
             }
 
-            .sensor-card-warning {
-                border-left: 6px solid darkred;
-            }
-
-            .sensor-history {
-                margin-top: 12px;
-                font-size: 14px;
-                color: #555;
-            }
-
             .sensor-stats {
                 margin-top: 12px;
                 font-size: 14px;
@@ -64,6 +66,35 @@
                 gap: 15px;
                 flex-wrap: wrap;
             }
+
+            .chart-container {
+                margin-top: 15px;
+                height: 220px;
+            }
+
+            .sensor-history {
+                margin-top: 12px;
+                font-size: 14px;
+                color: #555;
+            }
+
+            .controls {
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .controls label {
+                    font-weight: bold;
+                }
+
+                .controls select {
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    border: 1px solid #ccc;
+                    font-size: 14px;
+                }
 
             .error {
                 color: darkred;
@@ -77,29 +108,99 @@
     <body>
         <h1>Sensor Dashboard</h1>
 
+        <div class="controls">
+            <label for="sensor-select">View:</label>
+
+            <select id="sensor-select">
+                <option value="all">All Sensors</option>
+                <option value="Temperature">Temperature</option>
+                <option value="Humidity">Humidity</option>
+                <option value="Voltage">Voltage</option>
+            </select>
+        </div>
+
         <div id="sensor-container">
             Loading sensors...
         </div>
 
         <script>
+            const charts = {};
+
             function formatNumber(value) {
-                return Number(value).toFixed(2);
+                const number = Number(value);
+
+                if (Number.isNaN(number)) {
+                    return "N/A";
+                }
+
+                return number.toFixed(2);
+            }
+
+            function renderSensorChart(sensor, chartId) {
+                const canvas = document.getElementById(chartId);
+
+                if (!canvas) {
+                    return;
+                }
+
+                if (charts[chartId]) {
+                    charts[chartId].destroy();
+                }
+
+                const labels = sensor.history.map(reading => {
+                    return reading.timestamp.split(" ")[1];
+                });
+
+                const values = sensor.history.map(reading => reading.value);
+
+                charts[chartId] = new Chart(canvas, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: `${sensor.name} (${sensor.unit})`,
+                                data: values,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
             }
 
             async function loadSensors() {
-            try {
-            const response = await fetch("http://localhost:8080/sensors");
+                try {
+                const selectedSensor = document.getElementById("sensor-select").value;
 
-            if (!response.ok) {
-            throw new Error("Backend returned an error");
-            }
+                let url = "http://localhost:8080/sensors";
 
-            const data = await response.json();
+                if (selectedSensor !== "all") {
+                    url = `http://localhost:8080/sensors/${selectedSensor}`;
+                }
 
-            const container = document.getElementById("sensor-container");
-            container.innerHTML = "";
+                const response = await fetch(url);
 
-            data.sensors.forEach(sensor => {
+                if (!response.ok) {
+                    throw new Error("Backend returned an error");
+                }
+
+                const data = await response.json();
+                const sensors = data.sensors ? data.sensors : [data];
+
+                const container = document.getElementById("sensor-container");
+                container.innerHTML = "";
+
+            sensors.forEach(sensor => {
                 const card = document.createElement("div");
                 card.className = "sensor-card";
 
@@ -110,12 +211,15 @@
                 const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
 
                 const historyText = sensor.history
-                    .map(reading => formatNumber(reading))
-                    .join(", ");
+                    .map(reading => `${formatNumber(reading.value)} ${sensor.unit} at ${reading.timestamp}`)
+                    .join("<br>");
+
+                const chartId = `chart-${sensor.name}`;
 
                 card.innerHTML = `
                     <div class="sensor-name">${sensor.name}</div>
                     <div class="sensor-value">${formatNumber(sensor.value)} ${sensor.unit}</div>
+                    <div class="sensor-time">Last updated: ${sensor.timestamp}</div>
                     <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
 
                     <div class="sensor-stats">
@@ -124,25 +228,33 @@
                         <div>Avg: ${formatNumber(sensor.average)} ${sensor.unit}</div>
                     </div>
 
-                    <div class="sensor-history">
-                        <strong>Recent readings:</strong> ${historyText}
+                    <div class="chart-container">
+                        <canvas id="${chartId}"></canvas>
                     </div>
-                `;
 
-                container.appendChild(card);
-            });
+                    <div class="sensor-history">
+                        <strong>Recent readings:</strong><br>
+                        ${historyText}
+                    </div>
+                    `;
 
+                    container.appendChild(card);
+
+                    renderSensorChart(sensor, chartId);
+                });
             } catch (error) {
-            const container = document.getElementById("sensor-container");
+                const container = document.getElementById("sensor-container");
 
-            container.innerHTML = `
-            <div class="error">
-            Could not connect to the C++ backend.
-            Make sure the backend is running on port 8080.
-            </div>
-            `;
+                    container.innerHTML = `
+                        <div class="error">
+                            Could not connect to the C++ backend.
+                            Make sure the backend is running on port 8080.
+                        </div>
+                    `;
+                }
             }
-            }
+
+            document.getElementById("sensor-select").addEventListener("change", loadSensors);
 
             loadSensors();
 
