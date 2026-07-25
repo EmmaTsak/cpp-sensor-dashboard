@@ -125,34 +125,34 @@
 
         <script>
             const charts = {};
-
+        
             function formatNumber(value) {
                 const number = Number(value);
-
+        
                 if (Number.isNaN(number)) {
                     return "N/A";
                 }
-
+        
                 return number.toFixed(2);
             }
-
+        
             function renderSensorChart(sensor, chartId) {
                 const canvas = document.getElementById(chartId);
-
+        
                 if (!canvas) {
                     return;
                 }
-
+        
                 if (charts[chartId]) {
                     charts[chartId].destroy();
                 }
-
+        
                 const labels = sensor.history.map(reading => {
                     return reading.timestamp.split(" ")[1];
                 });
-
+        
                 const values = sensor.history.map(reading => reading.value);
-
+        
                 charts[chartId] = new Chart(canvas, {
                     type: "line",
                     data: {
@@ -177,74 +177,74 @@
                     }
                 });
             }
-
+        
             async function loadSensors() {
                 try {
-                const selectedSensor = document.getElementById("sensor-select").value;
-
-                let url = "http://localhost:8080/sensors";
-
-                if (selectedSensor !== "all") {
-                    url = `http://localhost:8080/sensors/${selectedSensor}`;
-                }
-
-                const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error("Backend returned an error");
-                }
-
-                const data = await response.json();
-                const sensors = data.sensors ? data.sensors : [data];
-
-                const container = document.getElementById("sensor-container");
-                container.innerHTML = "";
-
-            sensors.forEach(sensor => {
-                const card = document.createElement("div");
-                card.className = "sensor-card";
-
-                if (sensor.status !== "OK") {
-                    card.classList.add("sensor-card-warning");
-                }
-
-                const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
-
-                const historyText = sensor.history
-                    .map(reading => `${formatNumber(reading.value)} ${sensor.unit} at ${reading.timestamp}`)
-                    .join("<br>");
-
-                const chartId = `chart-${sensor.name}`;
-
-                card.innerHTML = `
-                    <div class="sensor-name">${sensor.name}</div>
-                    <div class="sensor-value">${formatNumber(sensor.value)} ${sensor.unit}</div>
-                    <div class="sensor-time">Last updated: ${sensor.timestamp}</div>
-                    <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
-
-                    <div class="sensor-stats">
-                        <div>Min: ${formatNumber(sensor.min)} ${sensor.unit}</div>
-                        <div>Max: ${formatNumber(sensor.max)} ${sensor.unit}</div>
-                        <div>Avg: ${formatNumber(sensor.average)} ${sensor.unit}</div>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="${chartId}"></canvas>
-                    </div>
-
-                    <div class="sensor-history">
-                        <strong>Recent readings:</strong><br>
-                        ${historyText}
-                    </div>
-                    `;
-
-                    container.appendChild(card);
-
-                    renderSensorChart(sensor, chartId);
-                });
-            } catch (error) {
-                const container = document.getElementById("sensor-container");
-
+                    const selectedSensor = document.getElementById("sensor-select").value;
+        
+                    let url = "http://localhost:8080/sensors";
+        
+                    if (selectedSensor !== "all") {
+                        url = `http://localhost:8080/sensors/${selectedSensor}`;
+                    }
+        
+                    const response = await fetch(url);
+        
+                    if (!response.ok) {
+                        throw new Error("Backend returned an error");
+                    }
+        
+                    const data = await response.json();
+                    const sensors = data.sensors ? data.sensors : [data];
+        
+                    const container = document.getElementById("sensor-container");
+                    container.innerHTML = "";
+        
+                    sensors.forEach(sensor => {
+                        const card = document.createElement("div");
+                        card.className = "sensor-card";
+        
+                        if (sensor.status !== "OK") {
+                            card.classList.add("sensor-card-warning");
+                        }
+        
+                        const statusClass = sensor.status === "OK" ? "status-ok" : "status-warning";
+        
+                        const historyText = sensor.history
+                            .map(reading => `${formatNumber(reading.value)} ${sensor.unit} at ${reading.timestamp}`)
+                            .join("<br>");
+        
+                        const chartId = `chart-${sensor.name}`;
+        
+                        card.innerHTML = `
+                            <div class="sensor-name">${sensor.name}</div>
+                            <div class="sensor-value">${formatNumber(sensor.value)} ${sensor.unit}</div>
+                            <div class="sensor-time">Last updated: ${sensor.timestamp}</div>
+                            <div class="sensor-status ${statusClass}">Status: ${sensor.status}</div>
+        
+                            <div class="sensor-stats">
+                                <div>Min: ${formatNumber(sensor.min)} ${sensor.unit}</div>
+                                <div>Max: ${formatNumber(sensor.max)} ${sensor.unit}</div>
+                                <div>Avg: ${formatNumber(sensor.average)} ${sensor.unit}</div>
+                            </div>
+        
+                            <div class="chart-container">
+                                <canvas id="${chartId}"></canvas>
+                            </div>
+        
+                            <div class="sensor-history">
+                                <strong>Recent readings:</strong><br>
+                                ${historyText}
+                            </div>
+                        `;
+        
+                        container.appendChild(card);
+        
+                        renderSensorChart(sensor, chartId);
+                    });
+                } catch (error) {
+                    const container = document.getElementById("sensor-container");
+        
                     container.innerHTML = `
                         <div class="error">
                             Could not connect to the C++ backend.
@@ -253,11 +253,11 @@
                     `;
                 }
             }
-
+        
             document.getElementById("sensor-select").addEventListener("change", loadSensors);
-
+        
             loadSensors();
-
+        
             setInterval(loadSensors, 2000);
         </script>
     </body>
