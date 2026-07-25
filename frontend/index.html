@@ -135,6 +135,14 @@
         
                 return number.toFixed(2);
             }
+
+            function createSafeId(text) {
+                return text
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, "-")
+                    .replace(/-+/g, "-")
+                    .replace(/^-|-$/g, "");
+            }
         
             function renderSensorChart(sensor, chartId) {
                 const canvas = document.getElementById(chartId);
@@ -214,7 +222,7 @@
                             .map(reading => `${formatNumber(reading.value)} ${sensor.unit} at ${reading.timestamp}`)
                             .join("<br>");
         
-                        const chartId = `chart-${sensor.name}`;
+                        const chartId = `chart-${createSafeId(sensor.name)}`;
         
                         card.innerHTML = `
                             <div class="sensor-name">${sensor.name}</div>
