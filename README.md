@@ -1,17 +1,25 @@
 # C++ Sensor Dashboard
 
 A full-stack C++ sensor dashboard that simulates IoT-style sensor readings and exposes them through a lightweight HTTP API.
-The project includes a simple web frontend that displays live sensor values, warning statuses, recent history, and basic statistics.
+
+The project includes a C++ backend, a JSON-based configuration file, background sensor updates, API endpoints, and a simple web frontend with live cards, statistics, status warnings, timestamps, and line charts.
 
 ## Overview
 
 This project was built as a beginner-friendly modern C++ learning project.
-It combines embedded-style sensor simulation, backend API development, and a small frontend dashboard.
+
+It combines:
+
+* Embedded-style sensor simulation
+* Backend API development in C++
+* Frontend dashboard development with HTML, CSS, JavaScript, and Chart.js
+* Modern C++ concepts such as smart pointers, RAII, STL containers, STL algorithms, and multithreading
+
+The backend creates simulated sensors such as temperature, humidity, and voltage. Sensor readings are updated in the background using a separate thread. The frontend fetches the data from the backend and displays it in a browser-based dashboard.
 
 ## Screenshot
 
 ![Sensor Dashboard](assets/dashboard-screenshot.png)
-The C++ backend generates simulated readings for sensors such as temperature, humidity, and voltage. These readings are updated in the background using a separate thread. The frontend fetches the data from the backend and displays it in a simple dashboard.
 
 ## Features
 
@@ -19,16 +27,22 @@ The C++ backend generates simulated readings for sensors such as temperature, hu
 * C++ HTTP backend API
 * Frontend dashboard using HTML, CSS, and JavaScript
 * Live auto-refreshing sensor cards
+* Chart.js line charts for recent readings
 * Sensor status detection:
 
   * `OK`
   * `LOW`
   * `HIGH`
 * Recent reading history for each sensor
+* Timestamps for each reading
 * Minimum, maximum, and average statistics
 * Background sensor updates using multithreading
 * Thread-safe access to shared sensor data
 * JSON API responses using `nlohmann/json`
+* Sensor configuration loaded from `config/sensors.json`
+* Config validation and error handling
+* Single-sensor API endpoint
+* Sensor history API endpoint
 * Clean C++ project structure with CMake
 
 ## Technologies Used
@@ -40,6 +54,7 @@ The C++ backend generates simulated readings for sensors such as temperature, hu
 * HTML
 * CSS
 * JavaScript
+* Chart.js
 
 ## C++ Concepts Practiced
 
@@ -60,13 +75,17 @@ This project focuses on several important modern C++ concepts:
   * `std::min_element`
   * `std::max_element`
   * `std::accumulate`
+* Structs for richer data records
 * Multithreading with `std::thread`
 * Thread synchronization with `std::mutex`
 * Safe locking with `std::lock_guard`
 * Atomic variables with `std::atomic`
 * Time handling with `std::chrono`
-* JSON serialization
+* File reading with `std::ifstream`
+* JSON parsing and serialization
 * Basic HTTP API design
+* Configuration-driven design
+* Defensive programming and validation
 
 ## Project Structure
 
@@ -75,6 +94,12 @@ cpp-sensor-dashboard/
 │
 ├── CMakeLists.txt
 ├── main.cpp
+├── README.md
+├── .gitignore
+├── LICENSE
+│
+├── config/
+│   └── sensors.json
 │
 ├── include/
 │   ├── Sensor.hpp
@@ -86,8 +111,11 @@ cpp-sensor-dashboard/
 │   ├── Sensor.cpp
 │   └── SensorManager.cpp
 │
-└── frontend/
-    └── index.html
+├── frontend/
+│   └── index.html
+│
+└── assets/
+    └── dashboard-screenshot.png
 ```
 
 ## How It Works
@@ -102,9 +130,93 @@ HTTP JSON API
 HTML/CSS/JavaScript Frontend
 ```
 
-The backend creates simulated sensors and updates their readings every second in a background thread.
+The backend loads sensor definitions from a JSON config file.
 
-The frontend calls the backend API every few seconds and updates the dashboard in the browser.
+Each sensor has:
+
+* Name
+* Unit
+* Random generated value range
+* Safe warning range
+
+A background thread updates sensor values every second. The backend stores the latest value, timestamp, recent history, and calculated statistics.
+
+The frontend calls the backend API every few seconds and updates the dashboard automatically.
+
+## Sensor Configuration
+
+Sensors are defined in:
+
+```text
+config/sensors.json
+```
+
+Example:
+
+```json
+{
+  "sensors": [
+    {
+      "name": "Temperature",
+      "unit": "C",
+      "minValue": 10.0,
+      "maxValue": 40.0,
+      "warningLow": 20.0,
+      "warningHigh": 30.0
+    },
+    {
+      "name": "Humidity",
+      "unit": "%",
+      "minValue": 10.0,
+      "maxValue": 90.0,
+      "warningLow": 30.0,
+      "warningHigh": 65.0
+    },
+    {
+      "name": "Voltage",
+      "unit": "V",
+      "minValue": 2.5,
+      "maxValue": 3.8,
+      "warningLow": 3.1,
+      "warningHigh": 3.5
+    }
+  ]
+}
+```
+
+This means sensors can be changed without editing the C++ source code.
+
+## Sensor Status Logic
+
+Each sensor has two ranges:
+
+1. Generated value range
+2. Safe operating range
+
+Example:
+
+```text
+Temperature generated range: 10.0°C to 40.0°C
+Temperature safe range:      20.0°C to 30.0°C
+```
+
+If the value is below the safe range, the status becomes:
+
+```text
+LOW
+```
+
+If the value is above the safe range, the status becomes:
+
+```text
+HIGH
+```
+
+Otherwise, the status is:
+
+```text
+OK
+```
 
 ## API Endpoints
 
@@ -135,48 +247,74 @@ Example response:
   "sensors": [
     {
       "average": 25.67,
-      "history": [24.12, 26.45, 27.30],
-      "max": 27.30,
+      "history": [
+        {
+          "timestamp": "2026-07-25 14:30:01",
+          "value": 24.12
+        }
+      ],
+      "max": 27.3,
       "min": 24.12,
       "name": "Temperature",
       "status": "OK",
+      "timestamp": "2026-07-25 14:30:01",
       "unit": "C",
-      "value": 27.30
+      "value": 27.3
     }
   ]
 }
 ```
 
-## Sensor Status Logic
-
-Each sensor has two ranges:
-
-1. A generated value range
-2. A safe operating range
-
-Example:
+### Get One Sensor
 
 ```text
-Temperature generated range: 10.0°C to 40.0°C
-Temperature safe range:      20.0°C to 30.0°C
+GET /sensors/Temperature
 ```
 
-If the value is below the safe range, the status becomes:
+Example response:
 
-```text
-LOW
+```json
+{
+  "average": 25.67,
+  "history": [
+    {
+      "timestamp": "2026-07-25 14:30:01",
+      "value": 24.12
+    }
+  ],
+  "max": 27.3,
+  "min": 24.12,
+  "name": "Temperature",
+  "status": "OK",
+  "timestamp": "2026-07-25 14:30:01",
+  "unit": "C",
+  "value": 27.3
+}
 ```
 
-If the value is above the safe range, the status becomes:
+### Get Sensor History
 
 ```text
-HIGH
+GET /sensors/Temperature/history
 ```
 
-Otherwise, the status is:
+Example response:
 
-```text
-OK
+```json
+{
+  "name": "Temperature",
+  "unit": "C",
+  "history": [
+    {
+      "timestamp": "2026-07-25 14:30:01",
+      "value": 24.12
+    },
+    {
+      "timestamp": "2026-07-25 14:30:02",
+      "value": 26.45
+    }
+  ]
+}
 ```
 
 ## How to Build
@@ -196,7 +334,7 @@ On Windows, you can use:
 * Visual Studio Build Tools
 * VS Code with the CMake Tools extension
 
-## Build Instructions
+### Build Instructions
 
 From the project root folder:
 
@@ -211,7 +349,7 @@ cmake --build .
 
 From the build folder, run the executable.
 
-On Windows with Visual Studio generator:
+On Windows with the Visual Studio generator:
 
 ```powershell
 .\Debug\sensor_dashboard.exe
@@ -243,6 +381,14 @@ http://localhost:8080/health
 http://localhost:8080/sensors
 ```
 
+```text
+http://localhost:8080/sensors/Temperature
+```
+
+```text
+http://localhost:8080/sensors/Temperature/history
+```
+
 ## Run the Frontend
 
 Keep the C++ backend running.
@@ -255,52 +401,57 @@ frontend/index.html
 
 in your browser.
 
-The dashboard should display live sensor cards with:
+The dashboard displays:
 
 * Latest value
 * Unit
-* Status
+* Last updated timestamp
+* Sensor status
 * Min value
 * Max value
 * Average value
 * Recent readings
+* Line chart for history
+* Dropdown filter for individual sensors
 
 ## Example Sensors
 
-The current version includes:
+The default configuration includes:
 
 * Temperature sensor
 * Humidity sensor
 * Voltage sensor
 
+More sensors can be added by editing:
+
+```text
+config/sensors.json
+```
+
 ## Future Improvements
 
 Possible future upgrades:
 
-* Add a `/sensors/{name}` endpoint
-* Add charts using Chart.js
 * Add WebSocket live updates
 * Save readings to SQLite
-* Add configuration from a JSON file
 * Add unit tests with GoogleTest
 * Add Docker support
-* Improve frontend design
-* Add timestamps for each reading
+* Add a React frontend
 * Add sensor enable/disable controls
+* Add CSV export for sensor history
+* Add authentication for API endpoints
 
 ## Learning Purpose
 
 This project was created to practice modern C++ through a realistic small application.
 
-It is intentionally small enough to complete as a beginner project, but it includes important real-world software concepts such as:
+It is intentionally small enough to understand as a beginner project, but it includes important real-world software concepts such as:
 
 * Backend APIs
 * Thread-safe shared data
 * Sensor-style simulation
+* JSON configuration
 * JSON serialization
 * Frontend-backend communication
+* Dashboard data visualization
 * Clean project structure
-
-## License
-
-This project is open source and available under the MIT License.
