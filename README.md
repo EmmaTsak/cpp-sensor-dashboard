@@ -1,62 +1,43 @@
 # C++ Sensor Dashboard
 
-A full-stack C++ sensor dashboard that simulates IoT-style sensor readings and exposes them through a lightweight HTTP API.
+A multithreaded C++17 sensor simulation and monitoring application with a JSON HTTP API and browser-based dashboard.
 
-The project includes a C++ backend, a JSON-based configuration file, background sensor updates, API endpoints, and a simple web frontend with live cards, statistics, status warnings, timestamps, and line charts.
+The project simulates IoT-style sensors such as temperature, humidity, and voltage. A background C++ thread updates sensor readings while the HTTP API exposes current values, status information, recent history, and calculated statistics to a JavaScript frontend.
 
-## Overview
-
-This project was built as a beginner-friendly modern C++ learning project.
-
-It combines:
-
-* Embedded-style sensor simulation
-* Backend API development in C++
-* Frontend dashboard development with HTML, CSS, JavaScript, and Chart.js
-* Modern C++ concepts such as smart pointers, RAII, STL containers, STL algorithms, and multithreading
-
-The backend creates simulated sensors such as temperature, humidity, and voltage. Sensor readings are updated in the background using a separate thread. The frontend fetches the data from the backend and displays it in a browser-based dashboard.
+It demonstrates practical use of modern C++ concepts including thread synchronization, RAII, smart pointers, STL containers and algorithms, JSON serialization, configuration-driven design, and HTTP API development.
 
 ## Screenshot
 
 ![Sensor Dashboard](assets/dashboard-screenshot.png)
 
-## Features
+## What I Built
 
-* Simulated IoT sensor readings
-* C++ HTTP backend API
-* Frontend dashboard using HTML, CSS, and JavaScript
-* Live auto-refreshing sensor cards
-* Chart.js line charts for recent readings
-* Sensor status detection:
+- Multithreaded sensor simulation in C++17
+- Thread-safe shared sensor state using `std::mutex` and `std::lock_guard`
+- Background readings updated every second
+- JSON HTTP API using `cpp-httplib`
+- Configuration-driven sensor definitions
+- Validation and error handling for invalid configuration
+- Bounded recent-reading history for each sensor
+- Minimum, maximum, and average calculations
+- `OK`, `LOW`, and `HIGH` warning-state detection
+- Single-sensor and sensor-history API endpoints
+- Browser dashboard built with HTML, CSS, and JavaScript
+- Chart.js graphs for recent readings
+- Automatic frontend refresh every two seconds
 
-  * `OK`
-  * `LOW`
-  * `HIGH`
-* Recent reading history for each sensor
-* Timestamps for each reading
-* Minimum, maximum, and average statistics
-* Background sensor updates using multithreading
-* Thread-safe access to shared sensor data
-* JSON API responses using `nlohmann/json`
-* Sensor configuration loaded from `config/sensors.json`
-* Config validation and error handling
-* Single-sensor API endpoint
-* Sensor history API endpoint
-* Clean C++ project structure with CMake
+## Tech Stack
 
-## Technologies Used
+- C++17
+- CMake
+- cpp-httplib
+- nlohmann/json
+- HTML
+- CSS
+- JavaScript
+- Chart.js
 
-* C++17
-* CMake
-* cpp-httplib
-* nlohmann/json
-* HTML
-* CSS
-* JavaScript
-* Chart.js
-
-## C++ Concepts Practiced
+## C++ Concepts Demonstrated
 
 This project focuses on several important modern C++ concepts:
 
